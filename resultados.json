@@ -68,5 +68,19 @@
     "maps_url": "https://maps.google.com/?q=-25.3041292,-57.5824772",
     "sv_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=-25.3041292,-57.5824772&heading=209",
     "fecha": "2026-03-29"
+  },
+  {
+    "lat": -25.3013062,
+    "lon": -57.5807957,
+    "heading": 209.1,
+    "tipo": "inmobiliaria",
+    "texto_cartel": "Se ve un cartel azul oscuro con información inmobiliaria y un número de teléfono visible en la parte inferior",
+    "telefono": "0982 97 24 34",
+    "inmobiliaria": "No completamente legible en la imagen",
+    "confianza": "media",
+    "dist_km": 1.37,
+    "maps_url": "https://maps.google.com/?q=-25.3013062,-57.5807957",
+    "sv_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=-25.3013062,-57.5807957&heading=209",
+    "fecha": "2026-03-29"
   }
 ]
