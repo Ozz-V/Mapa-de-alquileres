@@ -1,0 +1,44 @@
+[
+  {
+    "lat": -25.3121207,
+    "lon": -57.5863164,
+    "heading": 290.9,
+    "tipo": "alquiler_directo",
+    "texto_cartel": "SE ALQUILA BAT",
+    "telefono": "no legible",
+    "inmobiliaria": null,
+    "confianza": "media",
+    "dist_km": 0.18,
+    "maps_url": "https://maps.google.com/?q=-25.3121207,-57.5863164",
+    "sv_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=-25.3121207,-57.5863164&heading=291",
+    "fecha": "2026-03-29"
+  },
+  {
+    "lat": -25.3134783,
+    "lon": -57.5876946,
+    "heading": 125.5,
+    "tipo": "alquiler_directo",
+    "texto_cartel": "SE ALQUILA",
+    "telefono": "no legible",
+    "inmobiliaria": null,
+    "confianza": "media",
+    "dist_km": 0.2,
+    "maps_url": "https://maps.google.com/?q=-25.3134783,-57.5876946",
+    "sv_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=-25.3134783,-57.5876946&heading=126",
+    "fecha": "2026-03-29"
+  },
+  {
+    "lat": -25.3134092,
+    "lon": -57.5860972,
+    "heading": 212.7,
+    "tipo": "alquiler_directo",
+    "texto_cartel": "ALQUILO",
+    "telefono": "no legible",
+    "inmobiliaria": null,
+    "confianza": "media",
+    "dist_km": 0.27,
+    "maps_url": "https://maps.google.com/?q=-25.3134092,-57.5860972",
+    "sv_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=-25.3134092,-57.5860972&heading=213",
+    "fecha": "2026-03-29"
+  }
+]
