@@ -40,5 +40,33 @@
     "maps_url": "https://maps.google.com/?q=-25.3134092,-57.5860972",
     "sv_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=-25.3134092,-57.5860972&heading=213",
     "fecha": "2026-03-29"
+  },
+  {
+    "lat": -25.3195447,
+    "lon": -57.5926816,
+    "heading": 212.8,
+    "tipo": "inmobiliaria",
+    "texto_cartel": "inmobiliaria",
+    "telefono": "visible pero no legible con precisión",
+    "inmobiliaria": "inmobiliaria",
+    "confianza": "media",
+    "dist_km": 0.99,
+    "maps_url": "https://maps.google.com/?q=-25.3195447,-57.5926816",
+    "sv_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=-25.3195447,-57.5926816&heading=213",
+    "fecha": "2026-03-29"
+  },
+  {
+    "lat": -25.3041292,
+    "lon": -57.5824772,
+    "heading": 208.8,
+    "tipo": "inmobiliaria",
+    "texto_cartel": "MICBO con logo y número de teléfono visible",
+    "telefono": "visible pero no legible con precisión en la imagen",
+    "inmobiliaria": "MICBO",
+    "confianza": "media",
+    "dist_km": 1.01,
+    "maps_url": "https://maps.google.com/?q=-25.3041292,-57.5824772",
+    "sv_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=-25.3041292,-57.5824772&heading=209",
+    "fecha": "2026-03-29"
   }
 ]
