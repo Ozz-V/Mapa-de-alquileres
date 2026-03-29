@@ -71,9 +71,11 @@ def _passes_filter(result: dict) -> bool:
     if any(v in combined for v in _VENTA_WORDS):
         return False
 
-    # alquiler_directo: debe haber palabra de alquiler en el texto
+    # alquiler_directo: debe haber palabra de alquiler + teléfono legible
     if tipo == "alquiler_directo":
-        return any(a in combined for a in _ALQUILER_WORDS)
+        tiene_alquiler = any(a in combined for a in _ALQUILER_WORDS)
+        tiene_tel      = bool(tel and len(tel) >= 6 and tel.lower() != "no legible")
+        return tiene_alquiler and tiene_tel
 
     # inmobiliaria: debe decir "inmobiliaria" + tener teléfono
     if tipo == "inmobiliaria":
