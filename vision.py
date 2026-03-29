@@ -1,33 +1,37 @@
 """
 vision.py — Claude Vision detecta carteles de ALQUILER en fotos de Street View.
-Solo registra alquileres. Ignora ventas completamente.
+
+Reglas duras:
+  ✅ PASA  — dice explícitamente alquiler/alquilo/se alquila/arriendo/se renta
+  ✅ PASA  — dice "inmobiliaria" + tiene número de teléfono (sin mencionar venta)
+  ✅ PASA  — combo de las dos anteriores
+  ❌ DESCARTA — menciona venta/vendo/en venta/se vende (sin importar el resto)
+  ❌ DESCARTA — solo nombre de agencia o logo sin número ni palabra "alquiler"
 """
 
 import re, json, base64
 import anthropic
 
-PROMPT = """Sos un asistente experto en detectar carteles inmobiliarios de ALQUILER en calles de Paraguay.
+PROMPT = """Analizá esta imagen de Google Street View buscando carteles inmobiliarios de ALQUILER en Paraguay.
+Mirá rejas, paredes, postes, ventanas. Sé muy literal — solo registrá lo que dice explícitamente el cartel.
 
-Analizá esta imagen de Google Street View con MUCHO DETALLE. Mirá rejas, paredes, postes, ventanas.
+═══ CUÁNDO REGISTRAR (tiene_cartel: true) ═══
 
-═══ QUÉ REGISTRAR ═══
+✅ CASO 1 — Dice explícitamente alquiler:
+   Palabras exactas: ALQUILO · SE ALQUILA · EN ALQUILER · ALQUILER · ARRIENDO · SE RENTA · DUEÑO ALQUILA
+   → tipo: "alquiler_directo"
 
-✅ SEÑALES DIRECTAS de alquiler (registrar siempre):
-- "SE ALQUILA", "ALQUILO", "EN ALQUILER", "SE RENTA", "ALQUILER", "ARRIENDO"
-- "DUEÑO ALQUILA", "ALQUILO DIRECTO", "ALQUILA"
-- Cualquier variante escrita a mano o impresa
+✅ CASO 2 — Dice la palabra INMOBILIARIA y tiene número de teléfono visible:
+   La palabra "inmobiliaria" debe estar escrita en el cartel + debe haber un número de teléfono
+   → tipo: "inmobiliaria"
 
-✅ SEÑALES INDIRECTAS (registrar aunque no diga "alquiler" explícitamente):
-- Cartel de inmobiliaria conocida clavado en reja o pared de una propiedad:
-  RE/MAX, CENTURY 21, JARILLON, COLDWELL BANKER, ERA, o cualquier logo de agencia
-- Nombre de inmobiliaria + número de teléfono en una propiedad
-- Código QR de inmobiliaria en una propiedad
-- Un cartel genérico de agencia inmobiliaria (aunque no especifique alquiler o venta)
+═══ CUÁNDO IGNORAR (tiene_cartel: false) ═══
 
-❌ IGNORAR completamente:
-- "SE VENDE", "VENDO", "EN VENTA", "A LA VENTA" sin mención de alquiler
-- Carteles de negocios comerciales (almacén, farmacia, restaurant, etc.)
-- Publicidad que no sea inmobiliaria
+❌ Dice VENTA / EN VENTA / SE VENDE / VENDO → descartar SIEMPRE, aunque combine con otras cosas
+❌ Solo un logo o nombre de agencia (RE/MAX, Century 21, etc.) sin la palabra "inmobiliaria" escrita ni número
+❌ Carteles de negocios (almacén, farmacia, pizzería, "Pilar", nombres propios, etc.)
+❌ Publicidad que no sea específicamente inmobiliaria de alquiler
+❌ No hay ningún cartel visible
 
 ═══ RESPUESTA ═══
 
@@ -35,24 +39,49 @@ Respondé SOLO con JSON válido, sin texto extra ni backticks:
 {
   "tiene_cartel": true | false,
   "tipo": "alquiler_directo" | "inmobiliaria" | null,
-  "palabras_clave": ["palabras", "vistas", "en", "el", "cartel"],
-  "texto_cartel": "<todo el texto legible del cartel, o null>",
-  "telefono": "<número con código de área si aparece, o null>",
-  "inmobiliaria": "<nombre exacto de la inmobiliaria si aparece, o null>",
+  "palabras_clave": ["palabras", "exactas", "vistas"],
+  "texto_cartel": "<todo el texto legible, o null>",
+  "telefono": "<número si aparece, o null>",
+  "inmobiliaria": "<nombre de la agencia si aparece escrito, o null>",
   "confianza": "alta" | "media" | "baja",
   "descripcion": "<1 frase de lo que ves>"
 }
 
-Tipos:
-- "alquiler_directo" = dice explícitamente alquiler/alquilo/se renta/se alquila/arriendo
-- "inmobiliaria" = cartel de agencia sin especificar, pero claramente inmobiliario
-
 Confianza:
 - "alta" = texto perfectamente legible
-- "media" = se ve el cartel pero algo no es claro
-- "baja" = podría ser un cartel inmobiliario pero no estás seguro
+- "media" = se ve pero algo no es claro
+- "baja" = dudás si es un cartel inmobiliario de alquiler"""
 
-Un papel A4 pegado en la reja también cuenta. Sé minucioso."""
+
+_ALQUILER_WORDS = ["alquil", "arrend", "se renta", "en renta"]
+_VENTA_WORDS    = ["se vende", "en venta", "a la venta", "vendo", "en vta"]
+
+
+def _passes_filter(result: dict) -> bool:
+    if not result.get("tiene_cartel"):
+        return False
+
+    tipo     = result.get("tipo") or ""
+    texto    = (result.get("texto_cartel") or "").lower()
+    palabras = " ".join(result.get("palabras_clave") or []).lower()
+    tel      = result.get("telefono") or ""
+    combined = texto + " " + palabras
+
+    # Venta descarta siempre, sin excepciones
+    if any(v in combined for v in _VENTA_WORDS):
+        return False
+
+    # alquiler_directo: debe haber palabra de alquiler en el texto
+    if tipo == "alquiler_directo":
+        return any(a in combined for a in _ALQUILER_WORDS)
+
+    # inmobiliaria: debe decir "inmobiliaria" + tener teléfono
+    if tipo == "inmobiliaria":
+        tiene_palabra = "inmobiliaria" in combined
+        tiene_tel     = bool(tel and len(tel) >= 6)
+        return tiene_palabra and tiene_tel
+
+    return False
 
 
 def analyze(image_bytes: bytes, api_key: str) -> dict | None:
@@ -81,18 +110,8 @@ def analyze(image_bytes: bytes, api_key: str) -> dict | None:
         raw = re.sub(r"^```json\s*|```$", "", raw, flags=re.MULTILINE).strip()
         result = json.loads(raw)
 
-        # Doble chequeo: descartar si solo menciona venta sin alquiler
-        texto    = (result.get("texto_cartel") or "").lower()
-        palabras = " ".join(result.get("palabras_clave") or []).lower()
-        combined = texto + " " + palabras
-
-        SOLO_VENTA = ["se vende", "en venta", "a la venta", "vendo "]
-        ALQUILER   = ["alquil", "arrend", "renta", "inmobiliaria",
-                      "remax", "re/max", "century", "jarillon", "coldwell"]
-
-        if any(v in combined for v in SOLO_VENTA):
-            if not any(a in combined for a in ALQUILER):
-                return None   # Es pura venta, descartar
+        if not _passes_filter(result):
+            return None
 
         return result
 
