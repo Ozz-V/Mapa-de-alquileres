@@ -53,35 +53,42 @@ Confianza:
 - "baja" = dudás si es un cartel inmobiliario de alquiler"""
 
 
+import re as _re
+
 _ALQUILER_WORDS = ["alquil", "arrend", "se renta", "en renta"]
 _VENTA_WORDS    = ["se vende", "en venta", "a la venta", "vendo", "en vta"]
+
+
+def _has_real_phone(tel: str) -> bool:
+    """Requiere al menos 6 dígitos consecutivos — descarta frases como 'no legible'."""
+    if not tel:
+        return False
+    digits = _re.sub(r"[\s\-\(\)\+]", "", tel)
+    return bool(_re.search(r"\d{6,}", digits))
 
 
 def _passes_filter(result: dict) -> bool:
     if not result.get("tiene_cartel"):
         return False
 
-    tipo     = result.get("tipo") or ""
-    texto    = (result.get("texto_cartel") or "").lower()
-    palabras = " ".join(result.get("palabras_clave") or []).lower()
-    tel      = result.get("telefono") or ""
-    combined = texto + " " + palabras
+    tipo         = result.get("tipo") or ""
+    # SOLO el texto literal del cartel — NO palabras_clave (son interpretación del modelo)
+    texto_cartel = (result.get("texto_cartel") or "").lower()
+    tel          = result.get("telefono") or ""
 
-    # Venta descarta siempre, sin excepciones
-    if any(v in combined for v in _VENTA_WORDS):
+    # Venta en el texto real descarta siempre
+    if any(v in texto_cartel for v in _VENTA_WORDS):
         return False
 
-    # alquiler_directo: debe haber palabra de alquiler + teléfono legible
+    # alquiler_directo: palabra de alquiler en texto real + teléfono con dígitos reales
     if tipo == "alquiler_directo":
-        tiene_alquiler = any(a in combined for a in _ALQUILER_WORDS)
-        tiene_tel      = bool(tel and len(tel) >= 6 and tel.lower() != "no legible")
-        return tiene_alquiler and tiene_tel
+        tiene_alquiler = any(a in texto_cartel for a in _ALQUILER_WORDS)
+        return tiene_alquiler and _has_real_phone(tel)
 
-    # inmobiliaria: debe decir "inmobiliaria" + tener teléfono
+    # inmobiliaria: la palabra "inmobiliaria" debe estar ESCRITA en el cartel + teléfono real
     if tipo == "inmobiliaria":
-        tiene_palabra = "inmobiliaria" in combined
-        tiene_tel     = bool(tel and len(tel) >= 6)
-        return tiene_palabra and tiene_tel
+        tiene_palabra = "inmobiliaria" in texto_cartel
+        return tiene_palabra and _has_real_phone(tel)
 
     return False
 
