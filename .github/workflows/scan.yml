@@ -1,0 +1,42 @@
+name: 🗺️ Cartel Scanner
+
+on:
+  workflow_dispatch:    # Manual — vos decidís cuándo correrlo
+  # schedule:
+  #   - cron: "0 7 1 * *"   # Opcional: primer día de cada mes
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300   # 5 horas máx
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Dependencias
+        run: pip install requests anthropic
+
+      - name: 🗺️ Correr scanner
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_TOKEN:      ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python main.py
+
+      - name: 💾 Guardar progreso
+        if: always()   # Guardar aunque falle a mitad
+        run: |
+          git config user.name  "cartel-scanner-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add resultados.json seen.json osm_points.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore: progreso scan $(date +%Y-%m-%d) [skip ci]"
+          git push
