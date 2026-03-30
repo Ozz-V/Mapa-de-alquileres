@@ -161,17 +161,22 @@ def run():
             stats["procesados"] += 1
             continue
 
-        img = fetch_image(lat, lon, heading, GOOGLE_KEY)
-        stats["costo_usd"] += 0.007
+        # Sacar foto izquierda y derecha (carteles en paredes a los costados)
+        left_heading  = (heading + 270) % 360  # 90° a la izquierda
+        right_heading = (heading + 90)  % 360  # 90° a la derecha
 
-        if not img:
-            seen.add(point_key)
-            stats["procesados"] += 1
-            continue
-
-        stats["fotos"] += 1
-
-        analysis = analyze(img, GEMINI_KEY)
+        analysis = None
+        for cam_heading in [left_heading, right_heading]:
+            img = fetch_image(lat, lon, cam_heading, GOOGLE_KEY)
+            stats["costo_usd"] += 0.007
+            if not img:
+                continue
+            stats["fotos"] += 1
+            result = analyze(img, GEMINI_KEY)
+            if result:
+                analysis = result
+                break  # Encontró cartel, no hace falta la otra dirección
+            time.sleep(4.1)
 
         if (analysis
                 and analysis.get("tiene_cartel")
