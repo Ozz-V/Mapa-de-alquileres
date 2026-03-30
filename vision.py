@@ -81,5 +81,10 @@ def analyze(image_bytes: bytes, api_key: str) -> dict | None:
         return result
 
     except Exception as e:
-        print(f"    Vision error: {e}")
+        msg = str(e)
+        if "429" in msg or "RESOURCE_EXHAUSTED" in msg:
+            print("    Rate limit - esperando 60s...")
+            import time; time.sleep(60)
+        else:
+            print(f"    Vision error: {e}")
         return None
