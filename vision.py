@@ -29,6 +29,18 @@ PROMPT = (
 _ALQUILER_WORDS = ["alquil", "arrend", "se renta", "en renta"]
 _VENTA_WORDS    = ["se vende", "en venta", "a la venta", "vendo", "compramos", "vendemos"]
 
+# Throttle global: max 12 requests/min con margen de seguridad
+import time as _time
+_last_call = 0.0
+_MIN_INTERVAL = 5.0  # segundos entre llamadas
+
+def _throttle():
+    global _last_call
+    elapsed = _time.time() - _last_call
+    if elapsed < _MIN_INTERVAL:
+        _time.sleep(_MIN_INTERVAL - elapsed)
+    _last_call = _time.time()
+
 
 def _has_real_phone(tel: str) -> bool:
     if not tel:
@@ -52,6 +64,7 @@ def _passes_filter(result: dict) -> bool:
 
 
 def analyze(image_bytes: bytes, api_key: str) -> dict | None:
+    _throttle()  # Esperar si es necesario antes de llamar
     try:
         from google import genai
         from google.genai import types
@@ -81,10 +94,5 @@ def analyze(image_bytes: bytes, api_key: str) -> dict | None:
         return result
 
     except Exception as e:
-        msg = str(e)
-        if "429" in msg or "RESOURCE_EXHAUSTED" in msg:
-            print("    Rate limit - esperando 60s...")
-            import time; time.sleep(60)
-        else:
-            print(f"    Vision error: {e}")
+        print(f"    Vision error: {e}")
         return None
