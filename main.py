@@ -228,7 +228,7 @@ def run():
         if stats["procesados"] % 500 == 0:
             send_progress_map(all_points, seen, results, stats)
 
-        time.sleep(0.05)
+        time.sleep(4.1)  # Gemini free tier: max 15 req/min = 1 cada 4s
 
     save_seen(seen)
     save_results(results)
