@@ -5,6 +5,10 @@ on:
   # schedule:
   #   - cron: "0 7 1 * *"   # Opcional: primer día de cada mes
 
+# ✅ Permisos de escritura para poder guardar seen.json / resultados.json
+permissions:
+  contents: write
+
 jobs:
   scan:
     runs-on: ubuntu-latest
@@ -22,12 +26,12 @@ jobs:
           python-version: "3.12"
 
       - name: 📦 Dependencias
-        run: pip install requests anthropic
+        run: pip install requests anthropic staticmap Pillow matplotlib
 
       - name: 🗺️ Correr scanner
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN:      ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
