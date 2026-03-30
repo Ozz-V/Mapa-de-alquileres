@@ -15,8 +15,8 @@ from mapper     import generate_coverage_map
 # ── CONFIG ─────────────────────────────────────────────────────────────────────
 COMAGRO_LAT  = -25.3117193
 COMAGRO_LON  = -57.5880857
-RADIUS_KM    = 4.0
-STEP_M       = 40
+RADIUS_KM    = 2.0
+STEP_M       = 80
 MAX_COST_USD = 100.0
 MIN_CONFIDENCE = {"alta"}
 
