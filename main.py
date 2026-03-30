@@ -24,7 +24,7 @@ RESULTS_FILE = "resultados.json"
 SEEN_FILE    = "seen.json"
 
 GOOGLE_KEY       = os.environ["GOOGLE_MAPS_API_KEY"]
-ANTHROPIC_KEY    = os.environ["ANTHROPIC_API_KEY"]
+GEMINI_KEY       = os.environ["GEMINI_API_KEY"]
 TELEGRAM_TOKEN   = os.environ.get("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
@@ -171,7 +171,7 @@ def run():
 
         stats["fotos"] += 1
 
-        analysis = analyze(img, ANTHROPIC_KEY)
+        analysis = analyze(img, GEMINI_KEY)
 
         if (analysis
                 and analysis.get("tiene_cartel")
