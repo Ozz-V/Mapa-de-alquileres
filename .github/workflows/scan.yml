@@ -32,7 +32,7 @@ jobs:
           python-version: "3.12"
 
       - name: Dependencias
-        run: pip install requests anthropic staticmap Pillow matplotlib
+        run: pip install requests staticmap Pillow matplotlib google-generativeai
 
       - name: Reset (si se pidio)
         if: ${{ github.event.inputs.reset == 'si' }}
