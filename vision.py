@@ -5,7 +5,7 @@ vision.py — Gemini Flash detecta carteles de ALQUILER (gratis, 1500 req/dia).
 import re, json, base64, os
 import requests
 
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-1.5-flash"
 GEMINI_URL   = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     + GEMINI_MODEL + ":generateContent"
