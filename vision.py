@@ -1,8 +1,8 @@
 """
-vision.py — Gemini Vision detecta carteles de ALQUILER. Usa SDK oficial de Google.
+vision.py — Gemini 2.0 Flash Vision. Usa el SDK nuevo google-genai.
 """
 
-import re, json, base64
+import re, json, base64, io
 
 PROMPT = (
     "Analizá esta imagen de Google Street View. "
@@ -53,23 +53,21 @@ def _passes_filter(result: dict) -> bool:
 
 def analyze(image_bytes: bytes, api_key: str) -> dict | None:
     try:
-        import google.generativeai as genai
-        from google.generativeai.types import HarmCategory, HarmBlockThreshold
-        import PIL.Image
-        import io
+        from google import genai
+        from google.genai import types
 
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        client = genai.Client(api_key=api_key)
 
-        img = PIL.Image.open(io.BytesIO(image_bytes))
-
-        response = model.generate_content(
-            [PROMPT, img],
-            generation_config={"temperature": 0, "max_output_tokens": 400},
-            safety_settings={
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-            }
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[
+                types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
+                types.Part.from_text(text=PROMPT),
+            ],
+            config=types.GenerateContentConfig(
+                temperature=0,
+                max_output_tokens=400,
+            ),
         )
 
         raw = response.text.strip()
