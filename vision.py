@@ -1,15 +1,8 @@
 """
-vision.py — Gemini Flash detecta carteles de ALQUILER (gratis, 1500 req/dia).
+vision.py — Gemini Vision detecta carteles de ALQUILER. Usa SDK oficial de Google.
 """
 
-import re, json, base64, os
-import requests
-
-GEMINI_MODEL = "gemini-1.5-flash"
-GEMINI_URL   = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
-    + GEMINI_MODEL + ":generateContent"
-)
+import re, json, base64
 
 PROMPT = (
     "Analizá esta imagen de Google Street View. "
@@ -60,36 +53,26 @@ def _passes_filter(result: dict) -> bool:
 
 def analyze(image_bytes: bytes, api_key: str) -> dict | None:
     try:
-        b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
+        import google.generativeai as genai
+        from google.generativeai.types import HarmCategory, HarmBlockThreshold
+        import PIL.Image
+        import io
 
-        payload = {
-            "contents": [{
-                "parts": [
-                    {"text": PROMPT},
-                    {
-                        "inline_data": {
-                            "mime_type": "image/jpeg",
-                            "data": b64,
-                        }
-                    }
-                ]
-            }],
-            "generationConfig": {
-                "temperature": 0,
-                "maxOutputTokens": 400,
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+
+        img = PIL.Image.open(io.BytesIO(image_bytes))
+
+        response = model.generate_content(
+            [PROMPT, img],
+            generation_config={"temperature": 0, "max_output_tokens": 400},
+            safety_settings={
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
             }
-        }
-
-        r = requests.post(
-            GEMINI_URL,
-            params={"key": api_key},
-            json=payload,
-            timeout=30,
         )
-        r.raise_for_status()
-        data = r.json()
 
-        raw = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        raw = response.text.strip()
         raw = re.sub(r"^```json\s*|```$", "", raw, flags=re.MULTILINE).strip()
         result = json.loads(raw)
         result["tipo"] = "alquiler_directo"
