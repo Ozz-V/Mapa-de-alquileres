@@ -1,34 +1,46 @@
-name: 🗺️ Cartel Scanner
+name: Cartel Scanner
 
 on:
-  workflow_dispatch:    # Manual — vos decidís cuándo correrlo
-  # schedule:
-  #   - cron: "0 7 1 * *"   # Opcional: primer día de cada mes
+  workflow_dispatch:
+    inputs:
+      reset:
+        description: 'Reiniciar desde cero (borra seen.json)'
+        required: false
+        default: 'no'
+        type: choice
+        options:
+          - 'no'
+          - 'si'
 
-# ✅ Permisos de escritura para poder guardar seen.json / resultados.json
 permissions:
   contents: write
 
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 300   # 5 horas máx
+    timeout-minutes: 300
 
     steps:
-      - name: 📥 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🐍 Python 3.12
+      - name: Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: 📦 Dependencias
+      - name: Dependencias
         run: pip install requests anthropic staticmap Pillow matplotlib
 
-      - name: 🗺️ Correr scanner
+      - name: Reset (si se pidio)
+        if: ${{ github.event.inputs.reset == 'si' }}
+        run: |
+          rm -f seen.json resultados.json osm_points.json
+          echo "Reset completo - empezando desde cero"
+
+      - name: Correr scanner
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
@@ -36,8 +48,8 @@ jobs:
           TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
 
-      - name: 💾 Guardar progreso
-        if: always()   # Guardar aunque falle a mitad
+      - name: Guardar progreso
+        if: always()
         run: |
           git config user.name  "cartel-scanner-bot"
           git config user.email "bot@users.noreply.github.com"
